@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>
+    <url>
+        <loc>http://os-tres.net/blog/2010/02/17/mac-os-x-and-task-for-pid-mach-call/</loc>
+        <lastmod>2012-10-28T14:25:22+01:00</lastmod>
+    </url>
+    <url>
+        <loc>
+            http://os-tres.net/blog/2011/12/27/erlang-and-distel-slash-emacs-problems-on-os-x-tips/
+        </loc>
+        <lastmod>2012-10-28T14:25:22+01:00</lastmod>
+    </url>
+    <url>
+        <loc>
+            http://os-tres.net/blog/2012/11/05/the-cs372h-operating-systems-class-introduction/
+        </loc>
+        <lastmod>2012-11-05T18:58:22+01:00</lastmod>
+    </url>
+    <url>
+        <loc>http://os-tres.net/blog/2012/11/05/the-cs372h-operating-systems-class-lab-1/</loc>
+        <lastmod>2012-11-05T19:51:52+01:00</lastmod>
+    </url>
+    <url>
+        <loc>http://os-tres.net/blog/archives/</loc>
+        <lastmod>2012-11-05T19:51:52+01:00</lastmod>
+    </url>
+    <url>
+        <loc>http://os-tres.net/</loc>
+        <lastmod>2012-11-05T19:51:52+01:00</lastmod>
+    </url>
+</urlset>

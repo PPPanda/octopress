@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Emacs | Ivan's blog]]></title>
+  <link href="http://os-tres.net/blog/categories/emacs/atom.xml" rel="self"/>
+  <link href="http://os-tres.net/"/>
+  <updated>2012-11-05T19:52:01+01:00</updated>
+  <id>http://os-tres.net/</id>
+  <author>
+    <name><![CDATA[Ivan Ostres]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Erlang and Distel/Emacs problems on OS X – tips]]></title>
+    <link href="http://os-tres.net/blog/2011/12/27/erlang-and-distel-slash-emacs-problems-on-os-x-tips/"/>
+    <updated>2011-12-27T11:40:00+01:00</updated>
+    <id>http://os-tres.net/blog/2011/12/27/erlang-and-distel-slash-emacs-problems-on-os-x-tips</id>
+    <content type="html"><![CDATA[<p>I recently compiled  R14B04 version of Erlang OTP suite and tried to make it work with Distel (current trunk version). Pretty good how-to is described on Clemensont’s blog but still had two major problems with Erlang/Distel/Emacs24 combo:</p>
+
+<pre><code>* Connect to node (C-c C-d n) and node-ping (C-c C-d g) 
+  would always result in message “nodedown”
+* (after first one is fixed): Sometimes when adding breakpoint 
+  I would get a message “Module is not interpreted, can’t set breakpoints”
+</code></pre>
+
+<p>Solutions are as follows:</p>
+
+<br />
+
+
+<p><strong>"Nodedown" problem</strong></p>
+
+<p>This message indicated that Emacs is unable to connect to inferior Erlang process. This is a well known problem of Distel/Erlang for versions of Erlang starting from R14. I downloaded the patch from Ralfs post and applied it to Distel epmd.el file. Now I can correctly connect to Erlang node.</p>
+
+<br />
+
+
+<p><strong>"Module is not interpreted, can’t set breakpoints" problem</strong></p>
+
+<p>This is also Distel issue (so it seems). Fortunately, there is a simple workaround – when this message appears do the following:</p>
+
+<pre><code>* C-c C-d m (opens the monitor buffer)
+* k (kills the monitor buffer)
+* C-c C-d i (start interpreting) in the .erl buffer will now work.
+</code></pre>
+
+<p>That’s it.</p>
+]]></content>
+  </entry>
+  
+</feed>

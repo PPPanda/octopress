@@ -1,0 +1,476 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: CS372H | Ivan's blog]]></title>
+  <link href="http://os-tres.net/blog/categories/cs372h/atom.xml" rel="self"/>
+  <link href="http://os-tres.net/"/>
+  <updated>2012-11-05T19:52:01+01:00</updated>
+  <id>http://os-tres.net/</id>
+  <author>
+    <name><![CDATA[Ivan Ostres]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[The CS372H - Operating Systems class - Lab 1]]></title>
+    <link href="http://os-tres.net/blog/2012/11/05/the-cs372h-operating-systems-class-lab-1/"/>
+    <updated>2012-11-05T18:59:00+01:00</updated>
+    <id>http://os-tres.net/blog/2012/11/05/the-cs372h-operating-systems-class-lab-1</id>
+    <content type="html"><![CDATA[<h2>Lab 1 - boot loader</h2>
+
+<h3>Part 2: The Boot Loader</h3>
+
+<p> Q/A Section:</p>
+
+<p>Q: <em>At exactly what point does the processor transition from executing 16-bit code to executing 32-bit code?</em></p>
+
+<p>A: Processor transitions from executing 16-bit code to executing 32-bit code on execution of following instruction:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">mov</span> <span class="n">cr0</span><span class="p">,</span> <span class="n">eax</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Q: <em>What is the last instruction of the boot loader executed, and what is the first instruction of the kernel it just loaded?</em></p>
+
+<p>A: Last instruction of boot loader executed is call of routine in .text section of kernel:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">call</span> <span class="o">*%</span><span class="n">eax</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Q: <em>How does the boot loader decide how many sectors it must read in order to fetch the entire kernel from disk? Where does it find this information?</em></p>
+
+<p>A: Boot loader decides how many sectors to read using information stored in ELF header. The ELF file format is shown in following image:</p>
+
+<p><img class="center" src="/images/lab1_elf_file_header.png"></p>
+
+<p>At the start of main.c, first sector (512 bytes) is loaded from disk. This sector is now in memory starting on location of 0x10000 and contains <a href="http://www.ouah.org/RevEng/x430.htm">ELF File Header</a>. First check is whether this is a correct ELF file by checking if magic number (first four bytes) of ELF file are correct:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="k">if</span> <span class="p">(</span><span class="n">ELFHDR</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">e_magic</span> <span class="o">!=</span> <span class="n">ELF_MAGIC</span><span class="p">)</span>
+</span><span class='line'>        <span class="k">goto</span> <span class="n">bad</span><span class="p">;</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>ELF Program Header address is loaded to <code>ph</code> variable:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">ph</span> <span class="o">=</span> <span class="p">(</span><span class="k">struct</span> <span class="n">Proghdr</span> <span class="o">*</span><span class="p">)</span> <span class="p">((</span><span class="kt">uint8_t</span> <span class="o">*</span><span class="p">)</span> <span class="n">ELFHDR</span> <span class="o">+</span> <span class="n">ELFHDR</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">e_phoff</span><span class="p">);</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>where e_phoff is the offset of program header from the start of the file. Then we store the address of last program header to eph variable:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">eph</span> <span class="o">=</span> <span class="n">ph</span> <span class="o">+</span> <span class="n">ELFHDR</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">e_phnum</span><span class="p">;</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>where e_phnum is the number of entries in program header. Now we simply iterate through program header table and read segments using function <em>readseg</em> giving it 3 arguments:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">ph</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">p_va</span> <span class="p">(</span><span class="n">Segment</span> <span class="k">virtual</span> <span class="n">address</span><span class="p">)</span>
+</span><span class='line'><span class="n">ph</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">p_memsz</span> <span class="p">(</span><span class="n">Segment</span> <span class="n">size</span> <span class="n">in</span> <span class="n">memory</span><span class="p">)</span>
+</span><span class='line'><span class="n">ph</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">p_offset</span> <span class="p">(</span><span class="n">Segment</span> <span class="n">file</span> <span class="n">offset</span><span class="p">)</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>It's obvious that read size is rounded to sector size boundary which means that we load more than we really need in most cases.</p>
+
+<hr />
+
+<p><strong>Exercise 6.</strong> Reset the machine (exit qemu and start it again). Examine the 8 words of memory at 0x00100000 at the point the BIOS enters the boot loader, and then again at the point the boot loader enters the kernel. Why are they different?</p>
+
+<p>A: Entry point in kernel is 0xf0100000 which we pass as virtual address to <code>readseg</code> function which does 0xf0100000 &amp; 0xFFFFFF which gives the address at which we load the program text (0x100000). First 8 words contain first 8 words of kernel program text.</p>
+
+<hr />
+
+<p><strong>Exercise 8.</strong> We have omitted a small fragment of code - the code
+  necessary to print octal numbers using patterns of the form
+  "%o". Find and fill in this code fragment.</p>
+
+<p>Following fragment is added starting with line 209 in <code>printfmt.c</code>:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="k">case</span> <span class="sc">&#39;o&#39;</span>:
+</span><span class='line'>    <span class="n">num</span> <span class="o">=</span> <span class="n">getuint</span><span class="p">(</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">ap</span><span class="p">,</span> <span class="n">lflag</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">base</span> <span class="o">=</span> <span class="mi">8</span><span class="p">;</span>
+</span><span class='line'>    <span class="k">goto</span> <span class="n">number</span><span class="p">;</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">h2</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></h2>
+
+<p>Q: <em>Explain the interface between printf.c and
+console.c. Specifically, what function does console.c export? How is
+this function used by printf.c?</em></p>
+
+<p>A: File <code>console.c</code> exposes <code>cputchar</code> function which is used in
+<code>printf.c</code> file.</p>
+
+<p>Q: <em>Explain the following from console.c:</em></p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="k">if</span> <span class="p">(</span><span class="n">crt_pos</span> <span class="o">&amp;</span><span class="n">gt</span><span class="p">;</span><span class="o">=</span> <span class="n">CRT_SIZE</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">memmove</span><span class="p">(</span><span class="n">crt_buf</span><span class="p">,</span> <span class="n">crt_buf</span> <span class="o">+</span> <span class="n">CRT_COLS</span><span class="p">,</span> <span class="p">(</span><span class="n">CRT_SIZE</span> <span class="o">-</span> <span class="n">CRT_COLS</span><span class="p">)</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">uint16_t</span><span class="p">));</span>
+</span><span class='line'>    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="n">CRT_SIZE</span> <span class="o">-</span> <span class="n">CRT_COLS</span><span class="p">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">CRT_SIZE</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+</span><span class='line'>        <span class="n">crt_buf</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mh">0x0700</span> <span class="o">|</span> <span class="sc">&#39; &#39;</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">crt_pos</span> <span class="o">-=</span> <span class="n">CRT_COLS</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>A: This code does line scrolling if <code>crt_pos</code> is at last line of crt +
+1</p>
+
+<p>Q: <em>In the following code, what is going to be printed after 'y='?
+(note: the answer is not a specific value.) Why does this happen?</em></p>
+
+<p>A: Random garbage will be printed since second variable is not
+specified.</p>
+
+<hr />
+
+<p><strong>Challenge</strong> Enhance the console to allow text to be printed in
+  different colors.</p>
+
+<p>I decided to go with standard ANSI escape sequences to define text
+foreground and background colors. Full specification can be found here
+<a href="http://ascii-table.com/ansi-escape-sequences.php">ANSI escape sequence</a>. Defined
+functions include various screen actions but for text
+foreground/background coloring I decided to implement just a small
+subset of whole specification called "Set Graphics Mode". Following
+pattern is used to specify color:</p>
+
+<pre><code>Esc[Value;...;Valuem
+</code></pre>
+
+<p>Following attributes are defined:</p>
+
+<p><em>Text attributes:</em></p>
+
+<pre><code>0 All attributes off
+1 Bold on
+4 Underscore (on monochrome display adapter only)
+5 Blink on
+7 Reverse video on
+8 Concealed on
+</code></pre>
+
+<p>(in my implementation - text attributes are ignored)</p>
+
+<p><em>Foreground colors:</em></p>
+
+<pre><code>30 Black
+31 Red
+32 Green
+33 Yellow
+34 Blue
+35 Magenta
+36 Cyan
+37 White
+</code></pre>
+
+<p><em>Background colors:</em></p>
+
+<pre><code>40 Black
+41 Red
+42 Green
+43 Yellow
+44 Blue
+45 Magenta
+46 Cyan
+47 White
+</code></pre>
+
+<p>ANSI defined colors and CGA colors use different codes so translation table was needed. This table is defined in following array:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">static</span> <span class="kt">int</span> <span class="n">ansi_to_cga_color</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span>  <span class="mi">0</span><span class="p">,</span> <span class="cm">/* black */</span>
+</span><span class='line'>  <span class="mi">4</span><span class="p">,</span> <span class="cm">/* red */</span>
+</span><span class='line'>  <span class="mi">2</span><span class="p">,</span> <span class="cm">/* green */</span>
+</span><span class='line'>  <span class="mi">7</span><span class="p">,</span> <span class="cm">/* yellow */</span>
+</span><span class='line'>  <span class="mi">1</span><span class="p">,</span> <span class="cm">/* blue */</span>
+</span><span class='line'>  <span class="mi">5</span><span class="p">,</span> <span class="cm">/* magenta */</span>
+</span><span class='line'>  <span class="mi">3</span><span class="p">,</span> <span class="cm">/* cyan */</span>
+</span><span class='line'>  <span class="mi">7</span><span class="p">,</span> <span class="cm">/* white */</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="p">};</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>All changes are done in <code>lib/printfmt.c</code> file in <code>6e626f5e1fa1cb8d1daccccbd775c29faf7f836a</code> commit.</p>
+
+<p>To test this feature I added ANSI coloring to one of of cprintf's:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">cprintf</span><span class="p">(</span><span class="s">&quot;[32;45m395[40;31m decimal [37mis %o octal!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="mi">395</span><span class="p">);</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>And the result is:</p>
+
+<p><img class="center" src="/images/lab1_ansi_result.gif"></p>
+
+<hr />
+
+<p><strong>Exercise 11.</strong> Implement the backtrace function as specified above. Use the same format as in the example, since otherwise the grading script will be confused. When you think you have it working right, run make grade to see if its output conforms to what our grading script expects (you should pass the Count and Args tests), and fix it if it doesn't. After you have handed in your Lab 1 code, you are welcome to change the output format of the backtrace function any way you like.</p>
+
+<p>Calling stack for C programs has following layout:</p>
+
+<p><img class="center" src="/images/lab1_c_stack_layout.gif"></p>
+
+<p>I created the following C structure to read parameters from calling stack:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="k">struct</span> <span class="n">c_frame</span> <span class="p">{</span>
+</span><span class='line'>        <span class="kt">void</span> <span class="o">*</span><span class="n">prev_ebp</span><span class="p">;</span>
+</span><span class='line'>    <span class="kt">void</span> <span class="o">*</span><span class="n">eip</span><span class="p">;</span>
+</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">args</span><span class="p">[</span><span class="mi">5</span><span class="p">];</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>I decided to limit it to 5 function arguments since not a single function in current JOS kernel uses more than 4 - so this should be enough. Now the only problem is how to know when to stop recursive traversing of stack and for that answer, following line is from <code>kern\entry.S</code>:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">movl</span>    <span class="err">$</span><span class="mh">0x0</span><span class="p">,</span><span class="o">%</span><span class="n">ebp</span>                       <span class="err">#</span> <span class="n">nuke</span> <span class="n">frame</span> <span class="n">pointer</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>So this way - when we reach ebp with value 0 - we know that we should stop traversing stack. This is partial code of traverse:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">fp</span> <span class="o">=</span> <span class="p">(</span><span class="k">struct</span> <span class="n">c_frame</span> <span class="o">*</span><span class="p">)</span> <span class="n">read_ebp</span><span class="p">();</span>
+</span><span class='line'><span class="k">while</span> <span class="p">(</span><span class="nb">NULL</span> <span class="o">!=</span> <span class="n">fp</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="cm">/*</span>
+</span><span class='line'><span class="cm">      * Do something with current stack data</span>
+</span><span class='line'><span class="cm">      */</span>
+</span><span class='line'>    <span class="n">fp</span> <span class="o">=</span> <span class="p">(</span><span class="k">struct</span> <span class="n">c_frame</span> <span class="o">*</span><span class="p">)</span> <span class="n">fp</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">prev_ebp</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>The rest of this exercise is simply printing arguments using:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">fp</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="err">…</span> <span class="n">fp</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">args</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<hr />
+
+<p><strong>Exercise 12.</strong> Modify your stack backtrace function to display, for each eip, the function name, source file name, and line number corresponding to that eip.</p>
+
+<p>Excellent tutorial on stabs debug format can be found <a href="http://docs.freebsd.org/info/stabs/stabs.pdf">here</a>.</p>
+
+<p>Stabs structure and constants are defined in <code>inc\stab.h</code>. I decided to do both of those functions in one commit (<code>036672789b00140a951cc216f4ae8066b4c28a00</code>). Here is the result:</p>
+
+<p><img class="center" src="/images/lab1_backtrace_out.gif"></p>
+
+<p>and grade script for this lab is satisfied:</p>
+
+<p><img class="center" src="/images/lab1_grade_result.gif"></p>
+
+<hr />
+
+<p><strong>EXTRA point</strong> This makes pretty useful backtrace function but I didn't want to guess how many arguments there are to the function (by default we print 5 of them no matter how many of them function uses) nor arguments names so I decided to use <code>N_PSYM</code> stab tag to calculate number of arguments and get argument names. Now the same output with this enhancement is a bit more useful:</p>
+
+<p><img class="center" src="/images/lab1_backtrace_out_en.gif"></p>
+
+<p>We can easily spot from this output that <code>monitor</code> function has one argument named <code>tf</code>, that <code>i386_init</code> has no arguments etc, etc. This will make troubleshooting a bit easier.</p>
+
+<p>This enhancement is in commit (74818a8a7afc72da67f4c43a48a7e6bcd2f73960).</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[The CS372H - Operating Systems class - Introduction]]></title>
+    <link href="http://os-tres.net/blog/2012/11/05/the-cs372h-operating-systems-class-introduction/"/>
+    <updated>2012-11-05T18:52:00+01:00</updated>
+    <id>http://os-tres.net/blog/2012/11/05/the-cs372h-operating-systems-class-introduction</id>
+    <content type="html"><![CDATA[<h2>FAQ</h2>
+
+<p>Q: <em>Didn't you attend Operating Systems class in school?</em></p>
+
+<p>A: Yes, there was one. It was good for introductory suff like using syscalls from user-land, getting to know what process is, what thread is, how to do mutual exclusion using semaphores, mutexes etc., how to use signals.... It was good but it was all user-land based. There was no hacking kernel space at all.</p>
+
+<p>Q: <em>Why this class? Why not Coursera or something else?</em></p>
+
+<p>A: I love Coursera. I took three courses there "Machine Learning", "Algorithms: Design and Analysis, Part 1" and "Compilers". All three are great courses. Unfortunately there is no operating systems class. I found classes from few universities (Brown, MIT) but not all lab software is available to "outsiders". This course is used by University of Texas as CS372H (it's actually a MIT class) and all materials are publicly available.</p>
+
+<p>Q: <em>Why learning operating systems? Are you going for an operating system devel job?</em></p>
+
+<p>A: Well, I am interested in operating systems. I can't explain it - I just love low level stuff. I don't expect to land operating systems dev job since there is no such thing as operating systems dev where I live. (There isn't much IT wise where I live at all, but that is another story).</p>
+
+<h2>System setup</h2>
+
+<h3>Linux setup</h3>
+
+<p>I will be doing these labs on Linux Mint 13 64-bit which is publicly available for download. There is no particular reason for this exact version - I just had it at home on DVD.</p>
+
+<p>Procedure described at <a href="http://www.cs.utexas.edu/~mwalfish/classes/s11-cs372h/tools.html">Tools</a> page work as described except one little thing - I found that gcc "make" should not be started inside gcc source directory. I created build directory and started configure, make and make install from it.</p>
+
+<h3>Labs</h3>
+
+<p>Labs are available from following <a href="http://www.cs.utexas.edu/~mwalfish/classes/s11-cs372h/jos.git">GIT</a> repository. All the implementations I do as a part of this labs are available at <a href="https://github.com/iostres/CS372H">github</a>. Now we are done with setup and can actually start working on labs assignments.</p>
+]]></content>
+  </entry>
+  
+</feed>
